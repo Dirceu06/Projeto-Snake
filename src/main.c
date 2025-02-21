@@ -38,6 +38,11 @@ int main()
     int distanciaTabuleiroX = 650;
     int distanciaTabuleiroY = 75;
 
+    //icon do exe
+    Image icon_imagem = LoadImage("assets/img/icon.png");
+    ImageResize(&icon_imagem, 64, 64); // redimensionando imagem para o tamanho do icone
+    SetWindowIcon(icon_imagem);
+
     // maca
     Texture2D textura_maca;
     Image maca_imagem = LoadImage("assets/img/maca.png");
