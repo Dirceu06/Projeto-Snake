@@ -7,7 +7,7 @@
 
 #define SCREEN_WIDTH 1500
 #define SCREEN_HEIGHT 900
-#define FPS 90
+#define FPS 60
 #define corFundo DARKGRAY
 
 typedef struct
@@ -46,19 +46,18 @@ int main()
     // maca
     Texture2D textura_maca;
     Image maca_imagem = LoadImage("assets/img/maca.png");
-    ImageResize(&maca_imagem, 50, 50); // redimensionando imagem para o tamanho do display do quadrado
+    ImageResize(&maca_imagem, 50, 50); 
     textura_maca = LoadTextureFromImage(maca_imagem);
 
-    // cara da cobra
-    Texture2D textura_cobra;
 
     // cobra
     Color Vermelho_cobra = (Color){255, 0, 0, 255};
     Color atualRec_cobra = Vermelho_cobra;
     int tamanho_cobra = 3;
     int direcao = RIGHT;
-    float tempo_para_mudar = 0.125;
+    float tempo_para_mudar = 0.09;
     Posicao cobra[100];
+    bool movi_feita=false;
 
     for (int i = 0; i < tamanho_cobra; i++)
     {
@@ -66,12 +65,18 @@ int main()
         cobra[i].y = 7;
     }
 
+    //menu
+    bool tela_inicial = true;
+    bool tela_jogo = false;
+    bool tela_gameover = false;
+    int altura_botao = -150;
+    double tempo_again=0;
+
     double tempo_atual = GetTime();
     while (!WindowShouldClose())
     {
         BeginDrawing();
         ClearBackground(corFundo);
-        DrawText("Projeto Snake", 10, 10, 20, WHITE);
 
         // Desenhando o tabuleiro e a maça
         for (int linha = 0; linha < 15; linha++)
@@ -87,8 +92,28 @@ int main()
         }
         DrawTexture(textura_maca, macaX * 50 + distanciaTabuleiroX, macaY * 50 + distanciaTabuleiroY, WHITE);
 
+        // mudando a direção
+        if(tela_jogo && movi_feita){
+            if ((IsKeyPressed(KEY_W) || IsKeyPressed(KEY_UP)) && direcao != DOWN)
+            {
+                direcao = UP;
+            }
+            else if ((IsKeyPressed(KEY_S) || IsKeyPressed(KEY_DOWN)) && direcao != UP)
+            {
+                direcao = DOWN;
+            }
+            else if ((IsKeyPressed(KEY_A) || IsKeyPressed(KEY_LEFT)) && direcao != RIGHT)
+            {
+                direcao = LEFT;
+            }
+            else if ((IsKeyPressed(KEY_D) || IsKeyPressed(KEY_RIGHT)) && direcao != LEFT)
+            {
+                direcao = RIGHT;
+            }
+        }
+
         // cobra se movendo
-        if (GetTime() - tempo_atual > tempo_para_mudar)
+        if ((GetTime() - tempo_atual > tempo_para_mudar) && tela_jogo)
         {
             switch (direcao)
             {
@@ -132,16 +157,10 @@ int main()
         }
 
         // desenhando a cobra
+        
         for (int i = 0; i < tamanho_cobra; i++)
         {
-            if (i == 0)
-            {
-                atualRec_cobra = BLUE;
-            }
-            else
-            {
-                atualRec_cobra = Vermelho_cobra;
-            }
+            
             if (cobra[i].x == macaX && cobra[i].y == macaY)
             {
                 tamanho_cobra++;
@@ -162,36 +181,113 @@ int main()
                 if (cobra[i].x == cobra[j].x && cobra[i].y == cobra[j].y)
                 {
                     ClearBackground(BLACK);
-                    DrawText("Game Over!", (SCREEN_WIDTH - MeasureText("Game Over!", 30)) / 2, (SCREEN_HEIGHT - MeasureText("Game Over!", 30)) / 2, 30, WHITE);
-                   
+                    tela_jogo = false;
+                    tela_gameover = true;                   
+                }
+            }
+            DrawRectangle(cobra[i].x * 50 + distanciaTabuleiroX, cobra[i].y * 50 + distanciaTabuleiroY, 50, 50, atualRec_cobra);
+            DrawCircle(cobra[0].x * 50 + distanciaTabuleiroX + 25, cobra[0].y * 50 + distanciaTabuleiroY + 25, 20, WHITE);
+            DrawCircle(cobra[0].x * 50 + distanciaTabuleiroX + 25, cobra[0].y * 50 + distanciaTabuleiroY + 25, 10, BLACK);
+            movi_feita = true;
+        }
+
+        
+        
+        if(tela_inicial){
+            DrawText("Snake", SCREEN_WIDTH/2 - MeasureText("Snake", 50)/2 - 500, SCREEN_HEIGHT/2 - 350, 90, WHITE);
+
+            Rectangle jogarBtn = {SCREEN_WIDTH/2 - 550, SCREEN_HEIGHT/2-50 + altura_botao, 200, 100};
+            Rectangle sairBtn = {SCREEN_WIDTH/2 - 550, SCREEN_HEIGHT/2 + 60 + altura_botao, 200, 100};
+
+            DrawRectangleRounded(jogarBtn, 0.5, 12, WHITE);
+            DrawText("Jogar", SCREEN_WIDTH/2 - MeasureText("Jogar", 30)/2 - 450, SCREEN_HEIGHT/2 - 20 + altura_botao, 30, BLACK);
+
+            DrawRectangleRounded(sairBtn, 0.5, 12, WHITE);
+            DrawText("Sair", SCREEN_WIDTH/2 - MeasureText("Sair", 30)/2 - 450, SCREEN_HEIGHT/2 + 90 + altura_botao, 30, BLACK);
+
+            Vector2 mousePoint = GetMousePosition();
+            if (CheckCollisionPointRec(mousePoint, jogarBtn)) {
+                DrawRectangleRounded(jogarBtn, 0.5, 12, GRAY);
+                DrawText("Jogar", SCREEN_WIDTH/2 - MeasureText("Jogar", 30)/2 - 450, SCREEN_HEIGHT/2 - 20 + altura_botao, 30, BLACK);
+                if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                    tela_inicial = false;
+                    tela_jogo = true;
                 }
             }
 
-            DrawRectangle(cobra[i].x * 50 + distanciaTabuleiroX, cobra[i].y * 50 + distanciaTabuleiroY, 50, 50, atualRec_cobra);
+            if (CheckCollisionPointRec(mousePoint, sairBtn)) {
+                DrawRectangleRounded(sairBtn, 0.5, 12, GRAY);
+                DrawText("Sair", SCREEN_WIDTH/2 - MeasureText("Sair", 30)/2 - 450, SCREEN_HEIGHT/2 + 90 + altura_botao, 30, BLACK);
+
+                if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                    CloseWindow();
+                    return 0;
+                }
+            }
+
         }
 
-        // mudando a direção
-        if ((IsKeyPressed(KEY_W) || IsKeyPressed(KEY_UP)) && direcao != DOWN)
-        {
-            direcao = UP;
-        }
-        else if ((IsKeyPressed(KEY_S) || IsKeyPressed(KEY_DOWN)) && direcao != UP)
-        {
-            direcao = DOWN;
-        }
-        else if ((IsKeyPressed(KEY_A) || IsKeyPressed(KEY_LEFT)) && direcao != RIGHT)
-        {
-            direcao = LEFT;
-        }
-        else if ((IsKeyPressed(KEY_D) || IsKeyPressed(KEY_RIGHT)) && direcao != LEFT)
-        {
-            direcao = RIGHT;
-        }
+        if (tela_gameover){
+            DrawText("Game Over", SCREEN_WIDTH/2 - MeasureText("Game Over", 50)/2 - 515, SCREEN_HEIGHT/2 - 300, 90, RED);
 
+            Rectangle gameoverBtn = {SCREEN_WIDTH/2 - 550, SCREEN_HEIGHT/2 - 50 + altura_botao, 200, 100};
+            Rectangle sairBtn = {SCREEN_WIDTH/2 - 550, SCREEN_HEIGHT/2 + 60 + altura_botao, 200, 100};
+            
+            DrawRectangleRounded(gameoverBtn, 0.5, 12, WHITE);
+            DrawText("Again", SCREEN_WIDTH/2 - MeasureText("Again", 30)/2 - 450, SCREEN_HEIGHT/2 - 20 + altura_botao, 30, BLACK);
+            
+            DrawRectangleRounded(sairBtn, 0.5, 12, WHITE);
+            DrawText("Sair", SCREEN_WIDTH/2 - MeasureText("Sair", 30)/2 - 450, SCREEN_HEIGHT/2 + 90 + altura_botao, 30, BLACK);
+            
+            Vector2 mousePoint = GetMousePosition();
+            if (CheckCollisionPointRec(mousePoint, gameoverBtn)) {
+                DrawRectangleRounded(gameoverBtn, 0.5, 12, GRAY);
+                DrawText("Again", SCREEN_WIDTH/2 - MeasureText("Again", 30)/2 - 450, SCREEN_HEIGHT/2 - 20 + altura_botao, 30, BLACK);
+                if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                    tela_gameover = false;
+                    tela_jogo = true;
+                    tamanho_cobra = 3;
+                    direcao = RIGHT;
+                    tempo_again=GetTime();
+                    
+                    
+                    for (int i = 0; i < tamanho_cobra; i++)
+                    {
+                        cobra[i].x = 4 - i;
+                        cobra[i].y = 7;
+                    }
+                }
+            }
+            
+            if (CheckCollisionPointRec(mousePoint, sairBtn)) {
+                DrawRectangleRounded(sairBtn, 0.5, 12, GRAY);
+                DrawText("Sair", SCREEN_WIDTH/2 - MeasureText("Sair", 30)/2 - 450, SCREEN_HEIGHT/2 + 90 + altura_botao, 30, BLACK);
+                if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                    CloseWindow();
+                    return 0;
+                }
+            }
+        }
+        
+        if(tela_jogo || tela_gameover){
+            DrawText("Pontuação:", SCREEN_WIDTH/2 - MeasureText("Pontuação", 50)/2 - 550, SCREEN_HEIGHT/2 - 375, 80, WHITE);
+            char PontuacaoText[10];
+            sprintf(PontuacaoText, "%i", tamanho_cobra - 3);
+            DrawText(PontuacaoText, SCREEN_WIDTH/2 - MeasureText("Pontuação", 50)/2 - 65, SCREEN_HEIGHT/2 - 375, 80, WHITE);
+            //desenhando um timer no canto inferior esquerdo
+            DrawText("Tempo:", 50, SCREEN_HEIGHT - 50, 30, WHITE);
+            char TempoText[10];
+            if(tela_jogo){
+                sprintf(TempoText, " %.2f", GetTime()-tempo_again);
+            }
+            DrawText(TempoText, 150, SCREEN_HEIGHT - 50, 30, WHITE);
+        }
         EndDrawing();
     }
 
+
     UnloadImage(maca_imagem);
+    UnloadImage(icon_imagem);
     UnloadTexture(textura_maca);
     CloseWindow();
 
