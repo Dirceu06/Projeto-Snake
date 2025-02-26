@@ -7,7 +7,7 @@
 #define SCREEN_WIDTH 1500
 #define SCREEN_HEIGHT 900
 #define FPS 60
-#define corFundo DARKGRAY
+#define corFundo BLACK 
 
 typedef struct
 {
